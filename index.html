@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Miles & Baskets</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&display=swap");
+
+      :root {
+        --col-bg: #f7f6f3;
+        --card-bg: #fff;
+        --navy: #003366;
+        --navy-light: #e8eef4;
+        --purple: #6366f1;
+        --purple-light: #eef2ff;
+        --amber: #d97706;
+        --amber-light: #fef9ee;
+        --green: #16a34a;
+        --red: #dc2626;
+        --red-light: #fef2f2;
+        --border: #e2e2de;
+        --text: #1a1a1a;
+        --text-muted: #888;
+        --radius: 8px;
+        --shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          "DM Sans",
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        background: var(--col-bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
+
+      /* ── HEADER ── */
+      .header {
+        background: var(--navy);
+        color: #fff;
+        padding: 18px 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .header h1 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .header-hint {
+        font-size: 0.78rem;
+        opacity: 0.65;
+      }
+
+      /* ── LAYOUT ── */
+      .board {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 0;
+        min-height: calc(100vh - 60px);
+      }
+
+      .column {
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .column:last-child {
+        border-right: none;
+      }
+
+      .col-header {
+        padding: 16px 18px 12px;
+        border-bottom: 1px solid var(--border);
+        background: #fff;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      .col-title {
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .col-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .dot-pool {
+        background: var(--navy);
+      }
+      .dot-a {
+        background: var(--purple);
+      }
+      .dot-b {
+        background: var(--amber);
+      }
+      .col-count {
+        font-weight: 400;
+        color: var(--text-muted);
+        font-size: 0.78rem;
+        margin-left: auto;
+        text-transform: none;
+        letter-spacing: 0;
+      }
+
+      /* budget row */
+      .budget-row {
+        margin-top: 10px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .budget-row label {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .budget-input {
+        width: 100px;
+        padding: 5px 8px;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        font-family: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--navy);
+        text-align: right;
+        outline: none;
+        transition: border 0.15s;
+      }
+      .budget-input:focus {
+        border-color: var(--navy);
+      }
+
+      .miles-summary {
+        margin-top: 8px;
+        font-size: 0.82rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .spent-label {
+        color: var(--text-muted);
+      }
+      .spent-value {
+        font-weight: 700;
+        color: var(--navy);
+      }
+      .remaining {
+        font-weight: 600;
+      }
+      .remaining.ok {
+        color: var(--green);
+      }
+      .remaining.over {
+        color: var(--red);
+      }
+
+      /* progress bar */
+      .budget-bar-track {
+        margin-top: 8px;
+        height: 5px;
+        background: #eee;
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .budget-bar-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition:
+          width 0.25s,
+          background 0.25s;
+      }
+      .fill-a {
+        background: var(--purple);
+      }
+      .fill-b {
+        background: var(--amber);
+      }
+      .fill-over {
+        background: var(--red);
+      }
+
+      /* ── DROP ZONE ── */
+      .drop-zone {
+        flex: 1;
+        padding: 8px 10px;
+        overflow-y: auto;
+        min-height: 120px;
+        transition: background 0.15s;
+      }
+      .drop-zone.drag-over {
+        background: var(--navy-light);
+      }
+      .column:nth-child(2) .drop-zone.drag-over {
+        background: var(--purple-light);
+      }
+      .column:nth-child(3) .drop-zone.drag-over {
+        background: var(--amber-light);
+      }
+
+      .empty-msg {
+        text-align: center;
+        padding: 32px 16px;
+        color: #bbb;
+        font-size: 0.82rem;
+        font-style: italic;
+      }
+
+      /* ── PRODUCT CARD ── */
+      .product-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 10px 14px;
+        margin-bottom: 6px;
+        cursor: grab;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        transition:
+          box-shadow 0.15s,
+          transform 0.15s,
+          opacity 0.15s;
+        user-select: none;
+      }
+      .product-card:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
+      }
+      .product-card:active {
+        cursor: grabbing;
+      }
+      .product-card.dragging {
+        opacity: 0.4;
+        transform: scale(0.97);
+      }
+
+      .prod-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .prod-name {
+        font-size: 0.82rem;
+        font-weight: 500;
+        line-height: 1.3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .prod-note {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        margin-top: 1px;
+      }
+      .prod-tag {
+        display: inline-block;
+        font-size: 0.6rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 1px 6px;
+        border-radius: 3px;
+        margin-top: 3px;
+      }
+      /* Tag colours are injected dynamically from the TAGS config below */
+
+      .prod-name-row {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
+      }
+      .prod-link {
+        flex-shrink: 0;
+        width: 18px;
+        height: 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 3px;
+        color: #aaa;
+        transition:
+          color 0.15s,
+          background 0.15s;
+        text-decoration: none;
+      }
+      .prod-link:hover {
+        color: var(--navy);
+        background: var(--navy-light);
+      }
+      .prod-link svg {
+        width: 13px;
+        height: 13px;
+      }
+      .prod-miles {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--navy);
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+      .prod-miles.no-price {
+        color: #bbb;
+        font-weight: 400;
+        font-style: italic;
+        font-size: 0.75rem;
+      }
+
+      /* drag handle dots */
+      .drag-grip {
+        color: #ccc;
+        font-size: 0.7rem;
+        letter-spacing: 2px;
+        flex-shrink: 0;
+        padding-right: 4px;
+      }
+
+      /* ── RESPONSIVE ── */
+      @media (max-width: 800px) {
+        .board {
+          grid-template-columns: 1fr;
+        }
+        .column {
+          border-right: none;
+          border-bottom: 1px solid var(--border);
+        }
+        .drop-zone {
+          min-height: 80px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>Miles & Baskets</h1>
+      <span class="header-hint"
+        >Drag products between columns &middot; Set budgets per person</span
+      >
+    </div>
+
+    <div class="board" id="board">
+      <!-- columns are rendered by JS -->
+    </div>
+
+    <script>
+      // ═══════════════════════════════════════════════
+      // PRODUCT LIST — easy to add/remove/edit here
+      // ═══════════════════════════════════════════════
+      const PRODUCTS = [
+        {
+          id: "K390326",
+          name: "Sony Inzone H3 Wired Gaming Headset (Black)",
+          miles: 4331,
+          note: "",
+          tag: "Audio",
+          url: "https://www.krisshop.com/en/product/K390326/sony-inzone-h3-wired-gaming-headset-black.html",
+        },
+        {
+          id: "K315279",
+          name: "Sony PS5 DualSense Wireless Controller",
+          miles: 7267,
+          note: "",
+          tag: "Gaming",
+          url: "https://www.krisshop.com/en/product/K315279CF-model/k315279cf-model.html",
+        },
+        {
+          id: "K352332",
+          name: "Sony WH-CH720N Wireless Noise Cancelling Headphones (Black)",
+          miles: 9836,
+          note: "",
+          tag: "Audio",
+          url: "https://www.krisshop.com/en/product/K352332TR/sony-wh-ch720n-wireless-noise-cancelling-headphones-black.html",
+        },
+        {
+          id: "K365508",
+          name: "Sony Inzone H5 Wireless Gaming Headset (Black)",
+          miles: 10202,
+          note: "",
+          tag: "Audio",
+          url: "https://www.krisshop.com/en/product/K365508/sony-inzone-h5-wireless-gaming-headset-black.html",
+        },
+        {
+          id: "K403533",
+          name: "SanDisk USB-C Flash Drive: FIFA World Cup 2026",
+          miles: 5248,
+          note: "128GB",
+          tag: "Tech",
+          url: "https://www.krisshop.com/en/product/K403533CF-model/k403533cf-model.html",
+        },
+        {
+          id: "K401591",
+          name: "Adidas Audi F1 Team DNA 3 Stripes Cap",
+          miles: 3120,
+          note: "",
+          tag: "F1",
+          url: "https://www.krisshop.com/en/product/K401591TR/adidas-audi-f1-team-dna-3-stripes-cap-utility-black-osfm.html",
+        },
+        {
+          id: "K401631",
+          name: "Mercedes-AMG Petronas F1 Team Driver Jersey",
+          miles: 9920,
+          note: "",
+          tag: "F1",
+          url: "https://www.krisshop.com/en/product/K401631TRCF-model/k401631trcf-model.html",
+        },
+        {
+          id: "K383185",
+          name: "LEGO Ferrari SF-24 F1 Race Car",
+          miles: 2880,
+          note: "",
+          tag: "LEGO",
+          url: "https://www.krisshop.com/en/product/K383185/lego-ferrari-sf-24-f1-race-car.html",
+        },
+        {
+          id: "K383205",
+          name: "LEGO Oracle Red Bull Racing RB20 F1 Race Car",
+          miles: 2880,
+          note: "",
+          tag: "LEGO",
+          url: "https://www.krisshop.com/en/product/K383205/lego-oracle-red-bull-racing-rb20-f1-race-car.html",
+        },
+        {
+          id: "K359828",
+          name: "LEGO Flowers Roses",
+          miles: 1440,
+          note: "",
+          tag: "LEGO",
+          url: "https://www.krisshop.com/en/product/K359828/lego-lel-flowers-roses.html",
+        },
+        {
+          id: "K369219",
+          name: "Singapore Airlines A380-800 Diecast Model (1:400)",
+          miles: 7120,
+          note: "",
+          tag: "Souvenir",
+          url: "https://www.krisshop.com/en/product/K369219/singapore-airlines-a380-800-9v-skz-diecast-aircraft-model-scale-1-400.html",
+        },
+        {
+          id: "K382838",
+          name: "Casio Baby-G BGD-565U-7DR White Watch",
+          miles: 9181,
+          note: "",
+          tag: "Watch",
+          url: "https://www.krisshop.com/en/product/K382838/casio-baby-g-bgd-565u-7dr-standard-digital-white-watch.html",
+        },
+        {
+          id: "K403656",
+          name: "The Singapore Mint SG Landmarks 24K Gold-Plated Keychain",
+          miles: 2569,
+          note: "",
+          tag: "Souvenir",
+          url: "https://www.krisshop.com/en/product/K403656TR/the-singapore-mint-charms-of-singapore-sg-landmarks-24k-gold-plated-keychain.html",
+        },
+        {
+          id: "K389027",
+          name: "Disney Mickey Love SG Changi Airport Canvas Tote Bag",
+          miles: 2160,
+          note: "",
+          tag: "Souvenir",
+          url: "https://www.krisshop.com/en/product/K389027/disney-mickey-love-sg-changi-airport-canvas-tote-bag.html",
+        },
+        {
+          id: "K403665",
+          name: "The Singapore Mint Sleeping Mr Merlion 24K Keychain",
+          miles: 2056,
+          note: "",
+          tag: "Souvenir",
+          url: "https://www.krisshop.com/en/product/K403665TR/the-singapore-mint-sleeping-mr-merlion-24k-gold-plated-metal-keychain.html",
+        },
+        {
+          id: "K387162",
+          name: "Paddington x SIA Keychain + Foldable Bag",
+          miles: 2640,
+          note: "",
+          tag: "Souvenir",
+          url: "https://www.krisshop.com/en/product/K387162/plush-keychain-w-foldable-bag-by-paddington-x-singapore-airlines.html",
+        },
+        {
+          id: "K391541",
+          name: "The Little Drom Store Keychain Jalan MBS",
+          miles: 911,
+          note: "",
+          tag: "Souvenir",
+          url: "https://www.krisshop.com/en/product/K391541/the-little-drom-store-keychain-jalan-mbs.html",
+        },
+        {
+          id: "K391539",
+          name: "The Little Drom Store Keychain Jalan Merlion Hwaiting",
+          miles: 911,
+          note: "",
+          tag: "Souvenir",
+          url: "https://www.krisshop.com/en/product/K391539/the-little-drom-store-keychain-jalan-merlion-hwaiting.html",
+        },
+        {
+          id: "K395877",
+          name: "Adidas Wabash Loose T-Shirt, Black",
+          miles: 3120,
+          note: "",
+          tag: "Fashion",
+          url: "https://www.krisshop.com/en/product/K395877TRCF-model/k395877trcf-model.html",
+        },
+        {
+          id: "K403383",
+          name: "Adidas Argentina DNA T-Shirt, Crew Blue",
+          miles: 3303,
+          note: "",
+          tag: "Fashion",
+          url: "https://www.krisshop.com/en/product/K403383TRCF-model/k403383trcf-model.html",
+        },
+        {
+          id: "K401674",
+          name: "Adidas Argentina 26 Baseball Cap, OSFM",
+          miles: 1872,
+          note: "",
+          tag: "Fashion",
+          url: "https://www.krisshop.com/en/product/K401674TRCF-model/k401674trcf-model.html",
+        },
+        {
+          id: "K382104",
+          name: "SIA A380 Aircraft (Toy Model)",
+          miles: 3120,
+          note: "",
+          tag: "Souvenir",
+          url: "https://www.krisshop.com/en/product/K382104/singapore-airlines-a380-aircraft-toy-model.html",
+        },
+        {
+          id: "K382161",
+          name: "The Art Faculty Metal Bookmark – Gardens by the Bay",
+          miles: 720,
+          note: "",
+          tag: "Souvenir",
+          url: "https://www.krisshop.com/en/product/K382161/the-art-faculty-metal-bookmark-gardens-by-the-bay.html",
+        },
+      ];
+
+      // ═══════════════════════════════════════════════
+      // TAGS — colours & features configurable per tag
+      // Each tag maps to its visual style. Add new tags here to define
+      // their appearance; the matching `.tag-<name>` CSS rule will be
+      // injected automatically at startup.
+      // ═══════════════════════════════════════════════
+      const TAGS = {
+        Audio: { bg: "#e8f0fe", fg: "#1a56db" },
+        Gaming: { bg: "#fce7f3", fg: "#b91c8c" },
+        F1: { bg: "#fef3c7", fg: "#b45309" },
+        LEGO: { bg: "#dcfce7", fg: "#16a34a" },
+        Souvenir: { bg: "#f3e8ff", fg: "#7c3aed" },
+        Fashion: { bg: "#ffe4e6", fg: "#c2185b" },
+        Tech: { bg: "#e0f2fe", fg: "#0369a1" },
+        Watch: { bg: "#fef9c3", fg: "#854d0e" },
+      };
+
+      // Fallback styling for products whose tag is not declared in TAGS above
+      const DEFAULT_TAG_STYLE = { bg: "#eeeeee", fg: "#666666" };
+
+      // Initial budgets per person, in KrisFlyer miles. Keys align with the
+      // column keys in `columns` below. These seed `state.budget*`, which
+      // stays mutable thereafter (the user can edit each input).
+      const BUDGETS = {
+        a: 19730,
+        b: 23386,
+      };
+
+      // ═══════════════════════════════════════════════
+      // STATE
+      // ═══════════════════════════════════════════════
+      const state = {
+        // which column each product is in: "pool", "a", "b"
+        assignments: {},
+        budgetA: BUDGETS.a,
+        budgetB: BUDGETS.b,
+      };
+
+      // initialise all to pool
+      PRODUCTS.forEach((p) => (state.assignments[p.id] = "pool"));
+
+      // ═══════════════════════════════════════════════
+      // HELPERS
+      // ═══════════════════════════════════════════════
+      function fmt(n) {
+        if (n === null || n === undefined) return "—";
+        return n.toLocaleString("en");
+      }
+
+      function getColumnProducts(col) {
+        return PRODUCTS.filter((p) => state.assignments[p.id] === col);
+      }
+
+      function columnTotal(col) {
+        return getColumnProducts(col).reduce((s, p) => s + (p.miles || 0), 0);
+      }
+
+      // Inject one .tag-<name> CSS rule per entry in the TAGS config so
+      // the styling stays in sync with the data above.
+      function injectTagStyles() {
+        const slug = (name) => name.toLowerCase().replace(/\s+/g, "-");
+        const css = Object.entries(TAGS)
+          .map(
+            ([name, cfg]) =>
+              `.tag-${slug(name)}{background:${cfg.bg};color:${cfg.fg}}`,
+          )
+          .join("\n");
+        const styleEl = document.createElement("style");
+        styleEl.id = "tag-styles";
+        styleEl.textContent = css;
+        document.head.appendChild(styleEl);
+      }
+
+      // ═══════════════════════════════════════════════
+      // RENDER
+      // ═══════════════════════════════════════════════
+      function render() {
+        const board = document.getElementById("board");
+        board.innerHTML = "";
+
+        const columns = [
+          {
+            key: "pool",
+            label: "Products",
+            dot: "dot-pool",
+            showBudget: false,
+          },
+          {
+            key: "a",
+            label: "Person A",
+            dot: "dot-a",
+            showBudget: true,
+            budgetKey: "budgetA",
+            fillClass: "fill-a",
+          },
+          {
+            key: "b",
+            label: "Person B",
+            dot: "dot-b",
+            showBudget: true,
+            budgetKey: "budgetB",
+            fillClass: "fill-b",
+          },
+        ];
+
+        columns.forEach((col) => {
+          const items = getColumnProducts(col.key);
+          const total = columnTotal(col.key);
+          const colEl = document.createElement("div");
+          colEl.className = "column";
+
+          // header
+          let headerHTML = `
+      <div class="col-header">
+        <div class="col-title">
+          <span class="col-dot ${col.dot}"></span>
+          ${col.label}
+          <span class="col-count">${items.length} item${items.length !== 1 ? "s" : ""}</span>
+        </div>`;
+
+          if (col.showBudget) {
+            const budget = state[col.budgetKey];
+            const remaining = budget - total;
+            const pct = budget > 0 ? Math.min((total / budget) * 100, 100) : 0;
+            const isOver = remaining < 0;
+            const fillCls = isOver ? "fill-over" : col.fillClass;
+
+            headerHTML += `
+        <div class="budget-row">
+          <label>Budget:</label>
+          <input type="text" class="budget-input" value="${fmt(budget)}"
+                 data-budget-key="${col.budgetKey}" />
+          <label>miles</label>
+        </div>
+        <div class="miles-summary">
+          <span><span class="spent-label">Spent:</span> <span class="spent-value">${fmt(total)}</span></span>
+          <span class="remaining ${isOver ? "over" : "ok"}">
+            ${isOver ? "Over by " + fmt(Math.abs(remaining)) : fmt(remaining) + " left"}
+          </span>
+        </div>
+        <div class="budget-bar-track">
+          <div class="budget-bar-fill ${fillCls}" style="width:${pct}%"></div>
+        </div>`;
+          } else {
+            headerHTML += `
+        <div class="miles-summary" style="margin-top:8px;">
+          <span><span class="spent-label">Total pool:</span> <span class="spent-value">${fmt(total)}</span> miles</span>
+        </div>`;
+          }
+
+          headerHTML += `</div>`;
+          colEl.innerHTML = headerHTML;
+
+          // drop zone
+          const dz = document.createElement("div");
+          dz.className = "drop-zone";
+          dz.dataset.column = col.key;
+
+          if (items.length === 0) {
+            const emptyEl = document.createElement("div");
+            emptyEl.className = "empty-msg";
+            emptyEl.textContent = col.showBudget
+              ? "Drop products here"
+              : "All products assigned";
+            dz.appendChild(emptyEl);
+          }
+
+          items.forEach((p) => {
+            const card = document.createElement("div");
+            card.className = "product-card";
+            card.draggable = true;
+            card.dataset.id = p.id;
+
+            const milesStr =
+              p.miles !== null
+                ? `<span class="prod-miles">${fmt(p.miles)}</span>`
+                : `<span class="prod-miles no-price">No price</span>`;
+
+            const noteStr = p.note
+              ? `<div class="prod-note">${p.note}</div>`
+              : "";
+
+            const tagSlug = p.tag
+              ? p.tag.toLowerCase().replace(/\s+/g, "-")
+              : "";
+            const tagClass = p.tag ? "tag-" + tagSlug : "";
+            // tags not declared in TAGS get a fallback inline style
+            const tagStyleAttr =
+              p.tag && !TAGS[p.tag]
+                ? ` style="background:${DEFAULT_TAG_STYLE.bg};color:${DEFAULT_TAG_STYLE.fg}"`
+                : "";
+            const tagStr = p.tag
+              ? `<div><span class="prod-tag ${tagClass}"${tagStyleAttr}>${p.tag}</span></div>`
+              : "";
+
+            const linkIcon = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5H3.5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V9.5"/><path d="M9.5 2.5h4v4"/><path d="M13.5 2.5 7.5 8.5"/></svg>`;
+
+            card.innerHTML = `
+        <span class="drag-grip">⠿</span>
+        <div class="prod-info">
+          <div class="prod-name-row">
+            <span class="prod-name" title="${p.name}">${p.name}</span>
+            <a class="prod-link" href="${p.url}" target="_blank" rel="noopener" title="View on KrisShop" onclick="event.stopPropagation()">${linkIcon}</a>
+          </div>
+          ${noteStr}
+          ${tagStr}
+        </div>
+        ${milesStr}`;
+
+            // drag events on card
+            card.addEventListener("dragstart", (e) => {
+              e.dataTransfer.setData("text/plain", p.id);
+              e.dataTransfer.effectAllowed = "move";
+              requestAnimationFrame(() => card.classList.add("dragging"));
+            });
+            card.addEventListener("dragend", () =>
+              card.classList.remove("dragging"),
+            );
+
+            dz.appendChild(card);
+          });
+
+          // drop zone events
+          dz.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            dz.classList.add("drag-over");
+          });
+          dz.addEventListener("dragleave", (e) => {
+            if (!dz.contains(e.relatedTarget)) dz.classList.remove("drag-over");
+          });
+          dz.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dz.classList.remove("drag-over");
+            const prodId = e.dataTransfer.getData("text/plain");
+            if (prodId && state.assignments[prodId] !== col.key) {
+              state.assignments[prodId] = col.key;
+              render();
+            }
+          });
+
+          colEl.appendChild(dz);
+          board.appendChild(colEl);
+        });
+
+        // attach budget input listeners
+        document.querySelectorAll(".budget-input").forEach((input) => {
+          input.addEventListener("change", (e) => {
+            const raw = e.target.value.replace(/[^0-9]/g, "");
+            const val = parseInt(raw, 10) || 0;
+            state[e.target.dataset.budgetKey] = val;
+            render();
+          });
+          // select all on focus
+          input.addEventListener("focus", (e) => e.target.select());
+        });
+      }
+
+      // ═══════════════════════════════════════════════
+      // INIT
+      // ═══════════════════════════════════════════════
+      injectTagStyles();
+      render();
+    </script>
+  </body>
+</html>
