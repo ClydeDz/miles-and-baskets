@@ -1,0 +1,9 @@
+# Disallow all well-behaved crawlers — both search engines (Googlebot,
+# Bingbot, DuckDuckBot, …) and public LLM scrapers (GPTBot, ClaudeBot,
+# Google-Extended, CCBot, anthropic-ai, Bytespider, …). The wildcard
+# `User-agent: *` matches any crawler that voluntarily respects
+# robots.txt, so future LLM bots are covered without having to update
+# this file.
+
+User-agent: *
+Disallow: /
