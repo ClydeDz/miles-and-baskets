@@ -90,7 +90,117 @@ const BUDGETS = {
 
 ### Adding a third person (or renaming columns)
 
-The `columns` array inside `render()` is what defines each basket column — title, dot colour, fill colour, and which key in `state` holds its budget. To add a third person, append an entry there (declaring a matching `BUDGETS` key and `state.budgetC`) and add a `.dot-c`/`.fill-c` rule to the CSS.
+The `columns` array inside `render()` is what defines each basket column — title, dot colour, fill colour, and which key in `state` holds its budget. Adding a third person touches **three places in JS** and **four places in CSS** — none of them optional, otherwise the new column either won't render or will render with no styling.
+
+For concreteness, the steps below assume you're adding **Person C** in a teal/cyan theme.
+
+#### 1. Add a colour to `:root` (CSS)
+
+Declare two CSS variables for the new column's main + soft tint. Put them next to the existing `--purple` / `--amber` / `--teal` block at the top of `<style>`:
+
+```css
+:root {
+  /* …existing vars… */
+  --teal: #14b8a6;
+  --teal-light: #f0fdfa;
+}
+```
+
+#### 2. Bump the grid count (CSS)
+
+Tell the layout how many columns to draw. Without this, the new column wraps to a second row and typically disappears under the sticky header:
+
+```css
+.board {
+  grid-template-columns: 1fr 1fr 1fr 1fr; /* one slot per column */
+}
+```
+
+#### 3. Add the dot, fill, and drag-over rules (CSS)
+
+Three sibling rules — one for the column-header dot, one for the progress bar fill, one for the drop-zone highlight that fires when a product is dragged over that column:
+
+```css
+.dot-c {
+  background: var(--teal);
+}
+.fill-c {
+  background: var(--teal);
+}
+/* nth-child N matches the Nth column div in the .board grid */
+.column:nth-child(4) .drop-zone.drag-over {
+  background: var(--teal-light);
+}
+```
+
+#### 4. Add the initial budget (JS)
+
+Two `const`s need the new key:
+
+```js
+const BUDGETS = {
+  a: 19730,
+  b: 23386,
+  c: 15000, // ← add this
+};
+
+const state = {
+  assignments: {},
+  budgetA: BUDGETS.a,
+  budgetB: BUDGETS.b,
+  budgetC: BUDGETS.c, // ← add this
+};
+```
+
+#### 5. Append a column entry (JS)
+
+Inside `render()`, the `columns` array is what actually draws each header, dot, progress bar, and budget input. Append a fourth entry mirroring the shape of Person A / Person B:
+
+```js
+const columns = [
+  { key: "pool", label: "Products", dot: "dot-pool", showBudget: false },
+  {
+    key: "a",
+    label: "Person A",
+    dot: "dot-a",
+    showBudget: true,
+    budgetKey: "budgetA",
+    fillClass: "fill-a",
+  },
+  {
+    key: "b",
+    label: "Person B",
+    dot: "dot-b",
+    showBudget: true,
+    budgetKey: "budgetB",
+    fillClass: "fill-b",
+  },
+  // ↓ new
+  {
+    key: "c",
+    label: "Person C",
+    dot: "dot-c",
+    showBudget: true,
+    budgetKey: "budgetC",
+    fillClass: "fill-c",
+  },
+];
+```
+
+That field-by-field:
+
+| Field        | Purpose                                                                                         |
+| ------------ | ----------------------------------------------------------------------------------------------- |
+| `key`        | The bucket ID used in `state.assignments[productId]` and to look up `BUDGETS[key]`.             |
+| `label`      | Text shown in the column header.                                                                |
+| `dot`        | CSS class of the coloured dot in the header. Must match the `.dot-<name>` rule added in step 3. |
+| `showBudget` | Whether the column shows the editable budget input + progress bar (true for people).            |
+| `budgetKey`  | Which key in `state` holds this column's editable budget. Matches the `state.budgetC` line.     |
+| `fillClass`  | CSS class used for the progress-bar fill colour. Must match the `.fill-<name>` rule added.      |
+
+#### Renaming an existing column
+
+If you just want to relabel — e.g. turn "Person A" into "Alex" — only the `label` field in `columns` needs to change. The CSS rules, `state.budgetA`, and `BUDGETS.a` can stay as-is; the column's "identifier" is the `key`, not the label.
 
 ---
 
